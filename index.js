@@ -3,6 +3,12 @@ const github = require('@actions/github');
 
 async function run() {
   try {
+    // Check if running in GitHub Actions context
+    if (!github.context.repo.owner || !github.context.repo.repo) {
+      core.setFailed('This action must be run within GitHub Actions context. For testing, deploy to a repository and run the workflow.');
+      return;
+    }
+
     // Configuration
     const config = {
       shortThreshold: parseInt(core.getInput('short_threshold')) || 7,
@@ -12,19 +18,67 @@ async function run() {
         medium: core.getInput('medium_color') || 'FFA500',
         long: core.getInput('long_color') || 'FF0000'
       },
-      thresholdedUpdate: core.getInput('thresholded_update') === 'true'
+      thresholdedUpdate: core.getInput('thresholded_update') === 'true',
+      filterLabel: core.getInput('filter_label') || '',
+      issueState: core.getInput('issue_state') || 'all'
     };
     const token = core.getInput('github-token');
     const octokit = github.getOctokit(token);
 
     // Main function to process issues
     async function processIssues() {
-      const { data: issues } = await octokit.rest.issues.listForRepo({
-        ...github.context.repo,
-        state: 'all'
-      });
+      let allIssues = [];
+      let page = 1;
+      const perPage = 100;
 
-      for (const issue of issues) {
+      // Build the API parameters
+      const apiParams = {
+        ...github.context.repo,
+        state: config.issueState,
+        per_page: perPage,
+        page: page
+      };
+
+      // Only add labels filter if filterLabel is provided
+      if (config.filterLabel) {
+        apiParams.labels = config.filterLabel;
+      }
+
+      // Fetch all pages of issues
+      while (true) {
+        const labelFilter = config.filterLabel ? ` with label '${config.filterLabel}'` : '';
+        core.info(`Fetching page ${page} of ${config.issueState} issues${labelFilter}...`);
+        
+        // Update page number for current request
+        apiParams.page = page;
+        
+        const { data: issues } = await octokit.rest.issues.listForRepo(apiParams);
+
+        if (issues.length === 0) {
+          break; // No more issues to fetch
+        }
+
+        allIssues = allIssues.concat(issues);
+        
+        // If we got fewer than perPage results, this is the last page
+        if (issues.length < perPage) {
+          break;
+        }
+        
+        page++;
+      }
+
+      const filterMessage = config.filterLabel 
+        ? `${config.issueState} issues with '${config.filterLabel}' label` 
+        : `${config.issueState} issues`;
+      core.info(`Found ${allIssues.length} total ${filterMessage}`);
+
+      for (const issue of allIssues) {
+        // Skip pull requests (they also appear in issues API)
+        if (issue.pull_request) {
+          continue;
+        }
+
         const duration = calculateDuration(issue);
         const { label, color } = getLabelAndColorForDuration(duration, config);
 

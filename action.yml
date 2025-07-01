@@ -1,5 +1,5 @@
 name: 'Issue Duration Labeler'
-description: 'Automatically label issues with color-coded duration tags, helping teams track issue lifecycle and improve project management.'
+description: 'Automatically label issues (all, open, or closed) with color-coded duration tags. Optionally filter by specific label to focus on particular issues while minimizing API usage.'
 author: 'Mirek Lzicar'
 inputs:
   github-token:
@@ -29,6 +29,14 @@ inputs:
     description: 'Update issue duration only when a threshold is met'
     required: false
     default: 'true'
+  filter_label:
+    description: 'Only process issues with this label (leave empty to process all open issues)'
+    required: false
+    default: 'ephemeral'
+  issue_state:
+    description: 'Which issues to process: all, open, or closed'
+    required: false
+    default: 'open'
 
 runs:
   using: 'node20'
