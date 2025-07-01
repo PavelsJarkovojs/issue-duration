@@ -16,8 +16,9 @@ jobs:
     name: Label Issues with Duration
     
     permissions:
-      issues: write      # Allow adding/modifying labels on issues
-      contents: read     # Minimal read access
+      issues: write          # Allow adding/modifying labels on issues
+      pull-requests: write   # Allow reading and labeling pull requests
+      contents: read         # Minimal read access
       
     steps:
       - name: Checkout repository
@@ -27,8 +28,8 @@ jobs:
         uses: ./  # Use the local action in this repository
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          issue_state: 'all'           # Process all issues (open and closed)
-          filter_label: ''             # Leave empty to process all issues, or set to specific label like 'ephemeral'
+          issue_state: 'open'           # Process all issues (open and closed)
+          filter_label: 'ephemeral'     # Leave empty to process all issues, or set to specific label like 'ephemeral'
           short_threshold: '7'         # Issues 1-7 days old
           medium_threshold: '30'       # Issues 8-30 days old
           short_color: '00FF00'        # Green for short duration
