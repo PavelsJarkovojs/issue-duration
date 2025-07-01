@@ -79,21 +79,6 @@ jobs:
     filter_label: 'ephemeral'  # Only process open issues with "ephemeral" label
 ```
 
-### Custom thresholds with all issues and label filtering
-
-```yaml
-- uses: mireklzicar/issue-duration@main
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    issue_state: 'all'
-    filter_label: 'needs-review'
-    short_threshold: '7'
-    medium_threshold: '30'
-    short_color: '0E8A16'
-    medium_color: 'FFA500'
-    long_color: 'B60205'
-    thresholded_update: 'true'
-```
 
 ### Complete tracking with custom settings
 
@@ -101,8 +86,8 @@ jobs:
 - uses: mireklzicar/issue-duration@main
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
-    issue_state: 'all'
-    # No filter_label = process all issues of the specified state
+    issue_state: 'open'
+    filter_label = 'release'
     short_threshold: '3'
     medium_threshold: '14'
     short_color: '00FF00'
