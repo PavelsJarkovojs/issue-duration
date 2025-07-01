@@ -74,10 +74,6 @@ async function run() {
       core.info(`Found ${allIssues.length} total ${filterMessage}`);
 
       for (const issue of allIssues) {
-        // Skip pull requests (they also appear in issues API)
-        if (issue.pull_request) {
-          continue;
-        }
 
         const duration = calculateDuration(issue);
         const { label, color } = getLabelAndColorForDuration(duration, config);
