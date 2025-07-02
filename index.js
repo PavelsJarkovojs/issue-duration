@@ -103,7 +103,7 @@ async function run() {
       } else if (duration <= config.mediumThreshold) {
         return { label: `Duration: ${config.shortThreshold + 1}-${config.mediumThreshold} days`, color: config.colors.medium };
       } else {
-        return { label: 'Duration: >1 month', color: config.colors.long };
+        return { label: `Duration: >${config.mediumThreshold} days`, color: config.colors.long };
       }
     }
 
