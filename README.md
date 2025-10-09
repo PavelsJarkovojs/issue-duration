@@ -1,54 +1,68 @@
 # Issue Duration Labeler
 
-Automatically label issues with their duration and color-code based on configurable thresholds. This GitHub Action helps teams quickly identify how long issues have been open or how long they took to close, improving project management and visibility.
+A GitHub Action that automatically labels issues based on how long they have been open. This action helps teams visualize issue age with color-coded labels, making it easier to identify stale issues that need attention.
 
-![](issue-duration-preview.png)
+## What This Action Does
 
-## Input Parameters
+The Issue Duration Labeler automatically adds duration labels to your GitHub issues based on customizable time thresholds. Labels are color-coded to provide quick visual feedback:
+- **Green**: Short duration (recently opened issues)
+- **Orange**: Medium duration (issues that need attention)
+- **Red**: Long duration (stale issues that may need priority)
 
-| Parameter | Description | Required | Default |
-|-----------|-------------|----------|---------|
-| `github-token` | GitHub token for authentication | Yes | N/A |
-| `short_threshold` | Number of days considered short duration | No | '7' |
-| `medium_threshold` | Number of days considered medium duration | No | '30' |
-| `short_color` | Color for short duration labels (hex without #) | No | '00FF00' |
-| `medium_color` | Color for medium duration labels (hex without #) | No | 'FFA500' |
-| `long_color` | Color for long duration labels (hex without #) | No | 'FF0000' |
-| `thresholded_update` | Update issue duration only when a threshold is met | No | 'true' |
-| `filter_label` | Only process issues with this label (leave empty to process all issues of the specified state) | No | '' |
-| `issue_state` | Which issues to process: `all`, `open`, or `closed` | No | 'all' |
+## Inputs
 
-## Description
+### Required
 
-The Issue Duration Labeler action scans issues in your repository (all, open, or closed) and adds color-coded duration labels to each. You can optionally filter to **only process issues with a specific label** (e.g., "ephemeral", "needs-triage", etc.) to focus on particular issues and significantly reduce GitHub API usage.
+- **`github-token`** (required)
+  - Description: GitHub token for authentication
+  - Example: `${{ secrets.GITHUB_TOKEN }}`
 
-The duration is calculated as follows:
-- **For open issues**: from creation date to current date
-- **For closed issues**: from creation date to closed date
+### Optional
 
-Labels are color-coded based on configurable thresholds:
-- Short duration (default: 1-7 days): Green
-- Medium duration (default: 8-30 days): Orange  
-- Long duration (default: >1 month): Red
+- **`issue_state`** (optional)
+  - Description: Filter issues by state
+  - Options: `all`, `open`, `closed`
+  - Default: `all`
 
-**API Efficiency Options:**
-- **With `filter_label` set**: Processes only issues with the specified label - reduces API calls by up to 90%
-- **Without `filter_label`**: Processes all issues of the specified state
-- **Issue state control**: Choose `all` (default), `open`, or `closed` issues
-- **Pagination support**: Handles repositories with many issues efficiently
+- **`filter_label`** (optional)
+  - Description: Only process issues with this specific label
+  - Default: Process all issues (no filter)
 
-When `thresholded_update` is set to true (default), labels are only updated when a threshold is met. This reduces unnecessary label changes for minor duration updates. If set to false, all matching issues will be updated with the current duration every time the action runs.
+- **`short_threshold`** (optional)
+  - Description: Days threshold for short duration label
+  - Default: `7`
 
-**Usage Options:**
-- **Focused tracking**: Set `filter_label` to target specific issues (e.g., "ephemeral", "needs-review")
-- **Complete tracking**: Leave `filter_label` empty to process all issues of the specified state
-- **State control**: Process `all` issues (default), only `open` issues, or only `closed` issues
+- **`medium_threshold`** (optional)
+  - Description: Days threshold for medium duration label
+  - Default: `14`
 
-This action can be run on a schedule or triggered manually, allowing you to keep your issues consistently labeled with up-to-date duration information.
+- **`short_color`** (optional)
+  - Description: Hex color code for short duration label (without #)
+  - Default: `0E8A16` (green)
 
-## Setup
+- **`medium_color`** (optional)
+  - Description: Hex color code for medium duration label (without #)
+  - Default: `FFA500` (orange)
 
-To use this action in your workflow, add the following YAML to your `.github/workflows/issue-duration-labeler.yml` file:
+- **`long_color`** (optional)
+  - Description: Hex color code for long duration label (without #)
+  - Default: `B60205` (red)
+
+- **`thresholded_update`** (optional)
+  - Description: Only update labels when crossing thresholds
+  - Options: `true`, `false`
+  - Default: `false`
+
+## Outputs
+
+- **`labeled-issues`**
+  - Description: Number of issues that were labeled
+
+## Usage Instructions
+
+### Basic Setup
+
+Create a workflow file (e.g., `.github/workflows/issue-duration-labeler.yml`) in your repository:
 
 ```yaml
 name: Label Issues with Duration
@@ -62,53 +76,63 @@ jobs:
   label-issues:
     runs-on: ubuntu-latest
     steps:
-      - uses: mireklzicar/issue-duration@main
+      - uses: PavelsJarkovojs/issue-duration@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-## Usage Examples
-
-### Basic usage with default settings
+### Example: Label Only Open Issues
 
 ```yaml
-- uses: mireklzicar/issue-duration@main
+- uses: PavelsJarkovojs/issue-duration@main
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     issue_state: 'open'
-    filter_label: 'ephemeral'  # Only process open issues with "ephemeral" label
 ```
 
-### Custom thresholds with all issues and label filtering
+### Example: Custom Thresholds with Label Filtering
 
 ```yaml
-- uses: mireklzicar/issue-duration@main
+- uses: PavelsJarkovojs/issue-duration@main
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    issue_state: 'open'
+    filter_label: 'bug'  # Only process open issues labeled as 'bug'
+    short_threshold: '3'
+    medium_threshold: '7'
+    short_color: '00FF00'
+    medium_color: 'FFAA00'
+    long_color: 'FF0000'
+```
+
+### Example: Threshold-Based Updates
+
+```yaml
+- uses: PavelsJarkovojs/issue-duration@main
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     issue_state: 'all'
-    filter_label: 'needs-review'
     short_threshold: '7'
     medium_threshold: '30'
-    short_color: '0E8A16'
-    medium_color: 'FFA500'
-    long_color: 'B60205'
-    thresholded_update: 'true'
+    thresholded_update: 'true'  # Only update when crossing thresholds
 ```
 
-### Complete tracking with custom settings
+## How It Works
 
-```yaml
-- uses: mireklzicar/issue-duration@main
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    issue_state: 'all'
-    # No filter_label = process all issues of the specified state
-    short_threshold: '3'
-    medium_threshold: '14'
-    short_color: '00FF00'
-    medium_color: 'FFA500'
-    long_color: 'FF0000'
-    thresholded_update: 'false'  # Update all issues every run
-```
+1. The action fetches issues based on the `issue_state` filter
+2. If `filter_label` is specified, only issues with that label are processed
+3. For each issue, it calculates the duration (days since creation)
+4. Based on the thresholds, it assigns the appropriate duration label:
+   - `duration: short` (< short_threshold days)
+   - `duration: medium` (between short_threshold and medium_threshold days)
+   - `duration: long` (> medium_threshold days)
+5. If `thresholded_update` is true, labels are only updated when an issue crosses a threshold
+6. Labels are automatically created with the specified colors if they don't exist
 
-[The rest of the README remains unchanged]
+## License
+
+MIT License - see LICENSE file for details
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
